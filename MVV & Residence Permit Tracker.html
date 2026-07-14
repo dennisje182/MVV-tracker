@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MVV & Residence Permit Tracker</title>
+  <script src="https://cdn.jsdelivr.net/npm/react@18.3.1/umd/react.production.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.23.10/babel.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>* { box-sizing: border-box; margin: 0; padding: 0; }</style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState } = React;
+
+    const WHO_STYLES = {
+      you:  { bg: "#EFF6FF", color: "#1D4ED8", label: "You (Dennis)" },
+      her:  { bg: "#FFF1F2", color: "#BE185D", label: "Dalia" },
+      both: { bg: "#ECFDF5", color: "#065F46", label: "Both together" },
+    };
+
+    const STEPS = [
+      {
+        id: 1, who: "you",
+        title: "Check Sponsor Requirements",
+        location: "Netherlands — self-check",
+        how: "No application needed",
+        duration: "1–2 days",
+        timing: "Now — before anything else",
+        description: "Verify you meet all IND requirements as the Dutch-citizen sponsor.",
+        items: [
+          { id: "1a", text: "Gross monthly income ≥ €2,294.40 (without holiday pay) or ≥ €2,477.95 (with holiday pay) confirmed on payslip" },
+          { id: "1b", text: "Rental contract or property deed is in your name" },
+          { id: "1c", text: "Both partners are 21+ (exception: if you were already married when both lived outside NL, 18+ applies)" },
+        ],
+      },
+      {
+        id: 2, who: "her",
+        title: "Civic Integration Exam Abroad",
+        location: "Dutch Embassy, Mexico City",
+        how: "Register via DUO → exam at embassy on computer + headset",
+        duration: "3–6 months",
+        timing: "Start as soon as possible",
+        description: "She must pass the A1-level Dutch language and society exam (Basisexamen Inburgering Buitenland) before the MVV can be granted. Results are valid for 1 year. Useful resource: mvv-gezinshereniging.nl",
+        items: [
+          { id: "2a", text: "Register with DUO at inburgeren.nl for the civic integration exam abroad" },
+          { id: "2b", text: "Pay €150 exam fee to DUO" },
+          { id: "2c", text: "Receive candidate number from DUO (within 5 days of payment)" },
+          { id: "2d", text: "Email Dutch Embassy Mexico City to schedule exam appointment: mex-ca@minbuza.nl" },
+          { id: "2e", text: "Study using free official materials at naarnederland.nl (available in Spanish)" },
+          { id: "2f", text: "Take the exam at the embassy — 3 parts: Speaking (A1), Reading (A1), and KNS (Dutch Society — 30 questions, need 21 correct)" },
+          { id: "2g", text: "Receive result from DUO within 8 weeks via email — valid for 1 year" },
+        ],
+      },
+      {
+        id: 3, who: "both",
+        title: "Prepare & Submit Application",
+        location: "IND online portal — eforms.ind.nl",
+        how: "You apply online with DigiD — pay €254 via iDEAL at submission (MVV sticker fee paid separately at embassy in Step 5)",
+        duration: "1–2 weeks to prepare documents",
+        timing: "Can be prepared in parallel with Step 2 — submit when exam result is in",
+        description: "You apply as sponsor for both the residence permit and MVV simultaneously. Document list sourced directly from the IND wizard (June 2026) for your situation: unmarried, loondienst, contract 12+ months.",
+        items: [
+          { id: "3a", text: "Kopie identiteitsbewijs jou — alle pagina's paspoort incl. reisstempels (geen lege pagina's)" },
+          { id: "3b", text: "Kopie identiteitsbewijs Dalia — pagina met identiteitsgegevens + alle pagina's met reisstempels" },
+          { id: "3c", text: "Kopie ongehuwdverklaring Dalia uit Mexico — max 6 maanden oud; laten legaliseren en vertalen naar NL/EN/FR/DE" },
+          { id: "3d", text: "Loonstroken afgelopen 3 maanden (bij onregelmatig inkomen: afgelopen 12 maanden)" },
+          { id: "3e", text: "Arbeidsovereenkomst / aanstellingsbesluit (jouw huidige contract)", },
+          { id: "3f", text: "Bijlage Werkgeversverklaring 7110 — door werkgever invullen en ondertekenen, max 3 maanden oud", link: { url: "https://ind.nl/nl/formulieren/7110.pdf", label: "Download Bijlage 7110 (PDF, 205 KB)" } },
+          { id: "3g", text: "Bijlage Relatieverklaring 7108 — samen invullen en ondertekenen", link: { url: "https://ind.nl/nl/formulieren/7108.pdf", label: "Download Bijlage 7108 (PDF, 156 KB)" } },
+          { id: "3h", text: "Relatiebewijs meesturen bij Bijlage 7108: foto's, chat-/berichtenexports, vliegtickets, financiële overboekingen" },
+          { id: "3i", text: "Bijlage Antecedentenverklaring 7101 — door Dalia invullen en ondertekenen", link: { url: "https://ind.nl/nl/formulieren/7101.pdf", label: "Download Bijlage 7101 (PDF, 168 KB)" } },
+          { id: "3j", text: "Bijlage Intentieverklaring TBC-onderzoek 7103 — alleen indien IND dit vereist (Mexico staat op de TBC-lijst)", link: { url: "https://ind.nl/nl/formulieren/7103.pdf", label: "Download Bijlage 7103 (PDF, 214 KB)" } },
+          { id: "3k", text: "Basisexamen inburgering certificaat van DUO toevoegen zodra Dalia is geslaagd (Step 2)" },
+          { id: "3l", text: "Aanvraag indienen via eforms.ind.nl met DigiD" },
+          { id: "3m", text: "Leges betalen: €254 (verblijfsvergunning) via iDEAL bij online indiening" },
+        ],
+      },
+      {
+        id: 4, who: "both",
+        title: "Wait for IND Decision",
+        location: "Monitor via Mijn IND at ind.nl",
+        how: "Passive — respond to any IND requests promptly",
+        duration: "Up to 90 days",
+        timing: "After submission",
+        description: "The IND reviews your application. Dalia must remain in Mexico during this period. The IND does not recommend staying in the Netherlands during the MVV procedure.",
+        items: [
+          { id: "4a", text: "Receive IND confirmation letter with V-number" },
+          { id: "4b", text: "Monitor application status via Mijn IND (ind.nl) with DigiD" },
+          { id: "4c", text: "Dalia remains in Mexico during the full decision period" },
+          { id: "4d", text: "Respond promptly to any IND requests for additional documents (decision period will be extended if you do not respond)" },
+          { id: "4e", text: "Forward civic integration exam certificate to IND if not yet included at submission" },
+        ],
+      },
+      {
+        id: 5, who: "her",
+        title: "Collect MVV Sticker at Embassy",
+        location: "Dutch Embassy, Mexico City",
+        how: "In person, by appointment — book via netherlandsworldwide.nl",
+        duration: "1–2 weeks after approval",
+        timing: "After receiving IND approval letter",
+        description: "Once the IND approves the application, she collects the MVV visa sticker at the embassy and has her biometric data recorded. The MVV is valid for 90 days — plan travel accordingly.",
+        items: [
+          { id: "5a", text: "Receive IND approval letter (inwilligingsbrief) by post" },
+          { id: "5b", text: "Book appointment at Dutch Embassy Mexico City via netherlandsworldwide.nl/mexico" },
+          { id: "5c", text: "Bring to appointment: valid passport, IND approval letter, recent passport photo" },
+          { id: "5d", text: "Pay MVV sticker fee at embassy (separate from IND fee)" },
+          { id: "5e", text: "Biometric data recorded at embassy: fingerprints and signature" },
+          { id: "5f", text: "MVV sticker placed in passport — she now has 90 days to travel to the Netherlands" },
+        ],
+      },
+      {
+        id: 6, who: "her",
+        title: "Travel to the Netherlands",
+        location: "Netherlands",
+        how: "Book flight — do not wait until the last moment",
+        duration: "Within 90 days of MVV issue date",
+        timing: "After receiving MVV sticker",
+        description: "She travels to the Netherlands. The MVV expires 90 days after the sticker date — book the flight well in advance.",
+        items: [
+          { id: "6a", text: "Book flight to the Netherlands within the 90-day MVV window" },
+          { id: "6b", text: "Bring all original documents: passport with MVV sticker, IND approval letter" },
+        ],
+      },
+      {
+        id: 7, who: "both",
+        title: "Register at Municipality (Gemeente)",
+        location: "Your local gemeente (town hall)",
+        how: "In person together, by appointment",
+        duration: "Within 5 days of arrival",
+        timing: "Immediately after she arrives",
+        description: "She must register in the BRP (population register) to receive a BSN number, which is required for health insurance, banking, and work in the Netherlands.",
+        items: [
+          { id: "7a", text: "Book an appointment at your local gemeente" },
+          { id: "7b", text: "Bring: her passport with MVV sticker, your passport, proof of address (rental or property contract)" },
+          { id: "7c", text: "Receive BSN number at the appointment" },
+          { id: "7d", text: "Apply for Dutch health insurance within 4 months of registration" },
+          { id: "7e", text: "Open a Dutch bank account (BSN required)" },
+        ],
+      },
+      {
+        id: 8, who: "her",
+        title: "Collect Residence Permit at IND",
+        location: "IND desk — by appointment",
+        how: "In person at IND service desk",
+        duration: "A few weeks after gemeente registration",
+        timing: "After gemeente registration",
+        description: "The physical residence permit card is collected at the IND. Valid for 5 years. She is immediately free to work in the Netherlands without any restrictions.",
+        items: [
+          { id: "8a", text: "Receive IND letter with collection instructions (or check Mijn IND)" },
+          { id: "8b", text: "Book appointment at IND desk" },
+          { id: "8c", text: "Collect residence permit card (valid for 5 years as partner of Dutch citizen)" },
+          { id: "8d", text: "Check back of card: 'arbeid vrij toegestaan, TWV niet vereist' — she can work freely, no work permit needed" },
+          { id: "8e", text: "After 5 years: she can apply for a permanent residence permit" },
+        ],
+      },
+    ];
+
+    function MVVTracker() {
+      const totalItems = STEPS.reduce((s, step) => s + step.items.length, 0);
+
+      const [checked, setChecked] = useState(() => {
+        try {
+          const saved = localStorage.getItem("mvv-checked");
+          return saved ? JSON.parse(saved) : {};
+        } catch {
+          return {};
+        }
+      });
+
+      const [expanded, setExpanded] = useState({ 1: true });
+
+      const toggle = (id) =>
+        setChecked((prev) => {
+          const next = { ...prev, [id]: !prev[id] };
+          localStorage.setItem("mvv-checked", JSON.stringify(next));
+          return next;
+        });
+
+      const toggleExpand = (id) =>
+        setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
+
+      const doneCount = Object.values(checked).filter(Boolean).length;
+      const pct = Math.round((doneCount / totalItems) * 100);
+
+      return (
+        <div style={{ background: "#F5F0EA", minHeight: "100vh", padding: "2rem 1rem", fontFamily: "'DM Sans', sans-serif" }}>
+          <div style={{ maxWidth: 740, margin: "0 auto" }}>
+
+            <div style={{ marginBottom: "2rem" }}>
+              <p style={{ margin: "0 0 6px", fontSize: 11, letterSpacing: "0.18em", textTransform: "uppercase", color: "#9B7E5A" }}>
+                IND Partner Visa — Netherlands
+              </p>
+              <h1 style={{ margin: "0 0 16px", fontFamily: "'Playfair Display', serif", fontSize: "clamp(2rem, 5vw, 2.8rem)", color: "#1B2A4A", lineHeight: 1.15 }}>
+                MVV &amp; Residence Permit
+              </h1>
+
+              <div style={{ background: "#fff", borderRadius: 14, padding: "1rem 1.25rem", border: "1px solid #E2D9CE", boxShadow: "0 2px 12px rgba(0,0,0,0.04)" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: "#1B2A4A" }}>Overall progress</span>
+                  <span style={{ fontSize: 13, color: "#9B7E5A" }}>{doneCount} / {totalItems} tasks</span>
+                </div>
+                <div style={{ height: 10, background: "#EDE5DA", borderRadius: 99, overflow: "hidden" }}>
+                  <div style={{ height: "100%", width: `${pct}%`, background: "linear-gradient(90deg, #C4862B, #E9A84A)", borderRadius: 99, transition: "width 0.5s ease" }} />
+                </div>
+                <p style={{ margin: "6px 0 0", fontSize: 12, color: "#9B7E5A" }}>{pct}% complete</p>
+              </div>
+
+              <div style={{ display: "flex", gap: 10, marginTop: 12, flexWrap: "wrap" }}>
+                {Object.entries(WHO_STYLES).map(([k, s]) => (
+                  <div key={k} style={{ display: "flex", alignItems: "center", gap: 6, background: s.bg, color: s.color, fontSize: 12, fontWeight: 600, padding: "4px 12px", borderRadius: 99 }}>
+                    <div style={{ width: 7, height: 7, borderRadius: "50%", background: s.color }} />
+                    {s.label}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ position: "relative" }}>
+              <div style={{ position: "absolute", left: 19, top: 20, bottom: 20, width: 2, background: "#DDD4C5", zIndex: 0 }} />
+
+              {STEPS.map((step) => {
+                const ws = WHO_STYLES[step.who];
+                const open = !!expanded[step.id];
+                const stepDone = step.items.filter((i) => checked[i.id]).length;
+                const allDone = stepDone === step.items.length;
+
+                return (
+                  <div key={step.id} style={{ display: "flex", gap: 14, marginBottom: 14, position: "relative", zIndex: 1 }}>
+                    <div style={{
+                      width: 40, height: 40, borderRadius: "50%", flexShrink: 0,
+                      background: allDone ? "#C4862B" : "#fff",
+                      border: `2px solid ${allDone ? "#C4862B" : "#D4C4B0"}`,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      fontFamily: "'Playfair Display', serif",
+                      fontSize: allDone ? 16 : 15, fontWeight: 700,
+                      color: allDone ? "#fff" : "#8B7355",
+                      boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+                      transition: "all 0.35s ease",
+                      marginTop: 2,
+                    }}>
+                      {allDone ? "✓" : step.id}
+                    </div>
+
+                    <div style={{ flex: 1, background: "#fff", borderRadius: 14, border: "1px solid #E2D9CE", overflow: "hidden", boxShadow: "0 2px 10px rgba(0,0,0,0.04)" }}>
+                      <div onClick={() => toggleExpand(step.id)} style={{ padding: "1rem 1.2rem", cursor: "pointer", userSelect: "none" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginBottom: 5 }}>
+                              <span style={{ fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", color: "#9B7E5A" }}>Step {step.id}</span>
+                              <span style={{ fontSize: 11, fontWeight: 600, background: ws.bg, color: ws.color, padding: "2px 9px", borderRadius: 99 }}>
+                                {ws.label}
+                              </span>
+                            </div>
+                            <h2 style={{ margin: 0, fontFamily: "'Playfair Display', serif", fontSize: 17, fontWeight: 600, color: "#1B2A4A", lineHeight: 1.3 }}>
+                              {step.title}
+                            </h2>
+                            <div style={{ display: "flex", gap: 14, marginTop: 6, flexWrap: "wrap" }}>
+                              <span style={{ fontSize: 12, color: "#7A6247" }}>⏱ {step.duration}</span>
+                              <span style={{ fontSize: 12, color: "#7A6247" }}>📍 {step.location}</span>
+                            </div>
+                            <div style={{ marginTop: 4, fontSize: 12, color: "#9B7E5A" }}>🗓 {step.timing}</div>
+                          </div>
+                          <div style={{ textAlign: "right", flexShrink: 0 }}>
+                            <div style={{ fontSize: 12, color: "#9B7E5A", marginBottom: 4 }}>{stepDone}/{step.items.length}</div>
+                            <div style={{ fontSize: 16, color: "#C4862B", lineHeight: 1 }}>{open ? "▲" : "▼"}</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {open && (
+                        <div style={{ borderTop: "1px solid #F0E9DF" }}>
+                          <div style={{ padding: "0.9rem 1.2rem 0" }}>
+                            <p style={{ margin: "0 0 0.6rem", fontSize: 13, color: "#5C4A32", lineHeight: 1.65 }}>{step.description}</p>
+                            <div style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em", color: "#9B7E5A", marginBottom: 8 }}>
+                              Checklist
+                            </div>
+                          </div>
+                          <div style={{ paddingBottom: "0.5rem" }}>
+                            {step.items.map((item, idx) => {
+                              const done = !!checked[item.id];
+                              return (
+                                <div
+                                  key={item.id}
+                                  onClick={() => toggle(item.id)}
+                                  style={{
+                                    display: "flex", alignItems: "flex-start", gap: 10,
+                                    padding: "8px 1.2rem",
+                                    borderBottom: idx < step.items.length - 1 ? "1px solid #F5F0EA" : "none",
+                                    cursor: "pointer",
+                                    transition: "background 0.15s ease",
+                                    background: done ? "#FDFAF6" : "transparent",
+                                  }}
+                                >
+                                  <div style={{
+                                    width: 18, height: 18, borderRadius: 5, flexShrink: 0,
+                                    border: `2px solid ${done ? "#C4862B" : "#C9BAA8"}`,
+                                    background: done ? "#C4862B" : "#fff",
+                                    display: "flex", alignItems: "center", justifyContent: "center",
+                                    marginTop: 2, transition: "all 0.25s ease",
+                                  }}>
+                                    {done && <span style={{ color: "#fff", fontSize: 11, fontWeight: 700, lineHeight: 1 }}>✓</span>}
+                                  </div>
+                                  <div style={{ flex: 1 }}>
+                                    <span style={{
+                                      fontSize: 13, color: done ? "#9B7E5A" : "#1B2A4A", lineHeight: 1.55,
+                                      textDecoration: done ? "line-through" : "none",
+                                      transition: "all 0.2s ease",
+                                    }}>
+                                      {item.text}
+                                    </span>
+                                    {item.link && (
+                                      <div style={{ marginTop: 5 }}>
+                                        <a
+                                          href={item.link.url}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          onClick={(e) => e.stopPropagation()}
+                                          style={{
+                                            display: "inline-flex", alignItems: "center", gap: 4,
+                                            fontSize: 11, color: "#C4862B", fontWeight: 600,
+                                            textDecoration: "none", padding: "3px 8px",
+                                            border: "1px solid #C4862B", borderRadius: 4,
+                                            background: "#FDFAF6",
+                                          }}
+                                        >
+                                          ↓ {item.link.label}
+                                        </a>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div style={{ marginTop: 20, background: "#1B2A4A", borderRadius: 14, padding: "1.25rem 1.5rem" }}>
+              <p style={{ margin: "0 0 4px", fontSize: 12, color: "#7B9AB8", letterSpacing: "0.1em", textTransform: "uppercase" }}>Estimated total timeline</p>
+              <p style={{ margin: "0 0 4px", fontFamily: "'Playfair Display', serif", fontSize: 28, fontWeight: 700, color: "#E9A84A" }}>6 – 12 months</p>
+              <p style={{ margin: 0, fontSize: 12, color: "#7B9AB8" }}>
+                Biggest variable: scheduling of the civic integration exam (Step 2) and IND processing time (Step 4). Start Step 2 as early as possible.
+              </p>
+            </div>
+
+            <p style={{ textAlign: "center", marginTop: 16, fontSize: 11, color: "#B0A090" }}>
+              Based on IND.nl · Last checked June 2026 · Always verify current requirements at ind.nl
+            </p>
+          </div>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById("root"));
+    root.render(<MVVTracker />);
+  </script>
+</body>
+</html>
